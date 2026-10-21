@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-tests:
+    name: Node ${{ matrix.node }} · 单元测试
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # 零依赖：不执行 npm install，直接用 Node 内建 node:test。
+      # 显式文件列表在 Node 20 与 22 上都受支持（Node 21+ 不再接受目录参数）。
+      - name: 运行 node:test
+        run: node --test tests/node/*.test.js
+
+      - name: 示例 deck 契约检查（dry-run，不调用 Python）
+        run: node scripts/render-example.mjs --dry-run
+
+  python-tests:
+    name: Python ${{ matrix.python }} · 渲染器测试
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: 安装渲染器依赖
+        run: python -m pip install --disable-pip-version-check python-pptx pillow
+
+      - name: 运行 unittest
+        run: python -m unittest discover -s tests/python -v
+
+  render-smoke:
+    name: 渲染冒烟 · ubuntu（字体无关断言）
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装渲染器依赖
+        run: python -m pip install --disable-pip-version-check python-pptx pillow
+
+      # --no-preview：预览图依赖中文字体，CI（Linux）不保证有；
+      # 这里只验证 PPTX 本体与结构，断言全部与字体无关。
+      - name: 渲染示例 deck
+        run: node scripts/render-example.mjs --no-preview --out examples/out/demo-deck.pptx
+
+      - name: python-pptx 回读校验
+        run: |
+          python - <<'PY'
+          from pptx import Presentation
+
+          deck = Presentation('examples/out/demo-deck.pptx')
+          slides = list(deck.slides)
+          assert len(slides) == 9, '页数应为 9，实际 %d' % len(slides)
+          assert deck.slide_width > deck.slide_height, '应为横向 16:9'
+          charts = [sh for s in slides for sh in s.shapes if getattr(sh, 'has_chart', False)]
+          tables = [sh for s in slides for sh in s.shapes if getattr(sh, 'has_table', False)]
+          notes = [s for s in slides if s.notes_slide.notes_text_frame.text.strip()]
+          assert charts, '应至少包含一个原生图表对象'
+          assert tables, '应至少包含一个原生表格对象'
+          assert len(charts[0].chart.plots[0].series) == 2, '示例图表应有 2 个系列'
+          assert len(notes) == len(slides), '每页都应有讲稿'
+          print('回读通过：%d 页 · %d 图表 · %d 表格 · %d 页有讲稿' % (
+              len(slides), len(charts), len(tables), len(notes)))
+          PY
+
+      - name: 保存示例产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-deck-pptx
+          path: examples/out/demo-deck.pptx
+          if-no-files-found: error
+          retention-days: 7

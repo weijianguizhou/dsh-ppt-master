@@ -1,0 +1,94 @@
+{
+  "name": "dsh-ppt-master",
+  "version": "0.2.0",
+  "description": "DSH「PPT 大师」模式：联网取材 · 模板化设计 · 一键生成精美 PPTX。含 8 套内置设计规范模板、16 种版式渲染器（python-pptx）、8 类图表、设计审校器与环境自检。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./preset": {
+      "default": "./lib/preset.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --test tests/node/",
+    "test:python": "python -m unittest discover -s tests/python -v",
+    "test:all": "npm run test && npm run test:python",
+    "example": "node scripts/render-example.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weijianguizhou/dsh-ppt-master.git"
+  },
+  "homepage": "https://github.com/weijianguizhou/dsh-ppt-master#readme",
+  "bugs": {
+    "url": "https://github.com/weijianguizhou/dsh-ppt-master/issues"
+  },
+  "author": "weijianguizhou",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dshhub": {
+    "schemaVersion": 1,
+    "displayName": "PPT 大师",
+    "summary": "为 DSH 添加「PPT 大师」模式：联网搜索素材与灵感、创建/管理模板、按模板一键生成精美 PPTX（python-pptx 真渲染），并带设计审校与环境自检。",
+    "categories": [
+      "文档",
+      "创作",
+      "办公"
+    ],
+    "surfaces": [
+      "host"
+    ],
+    "capabilities": {
+      "provides": [
+        "tools:ppt_research",
+        "tools:ppt_templates",
+        "tools:ppt_build",
+        "tools:ppt_lint",
+        "tools:ppt_doctor",
+        "preset:ppt-master",
+        "skill:ppt-master"
+      ]
+    },
+    "permissions": {
+      "network": [
+        "https://*"
+      ]
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "ppt",
+    "pptx",
+    "slide",
+    "presentation",
+    "python-pptx",
+    "template",
+    "design",
+    "agent-preset"
+  ],
+  "license": "MIT"
+}

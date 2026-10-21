@@ -1,0 +1,28 @@
+# 随包分发的 DSH 补丁层 —— 由 package.json 的 dsh.bundle.patch 引用。
+#
+# 安装本插件后，下面两行会被自动并入 profile 的 boot graph：
+#
+#   1. dsh-ppt-master        宿主插件本体：注册 ppt_research / ppt_templates /
+#                            ppt_build / ppt_lint / ppt_doctor 五个工具、模板与
+#                            预览的 HTTP 路由、以及「PPT 大师」方法论技能。
+#   2. @deepseek-ai/dsh-agent-preset
+#                            以官方 preset 插件声明一个名为「PPT 大师」的会话模式
+#                            （新建会话时在 Hero 的模式选择器里可选）。该模式的
+#                            附加行 dsh-ppt-master/preset 只在该模式的作用域内
+#                            注册：大师人设系统提示词 + 方法论技能 + 同款工具
+#                            （作用域内注册可遮蔽全局注册，不会重复报错）。
+#
+# 两行互不依赖：即使 preset 声明失败，工具与技能仍然全局可用。
+- insert:
+    - id: ppt-master
+      name: "dsh-ppt-master"
+    - id: preset-ppt-master
+      name: "@deepseek-ai/dsh-agent-preset"
+      config:
+        id: ppt-master
+        name: "PPT 大师"
+        description: "大师级演示文稿工作流：联网取材 · 模板化版式 · 一键生成 PPTX"
+        order: 30
+        plugins:
+          - id: ppt-master-mode
+            name: "dsh-ppt-master/preset"

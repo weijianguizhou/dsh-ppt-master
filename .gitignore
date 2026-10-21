@@ -1,0 +1,36 @@
+# ── 依赖 ──────────────────────────────────────────────────────────────
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+
+# ── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ── 系统 / 编辑器 ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# ── 运行产物 ──────────────────────────────────────────────────────────
+out/
+examples/out/
+*.preview.png
+*.log
+
+# JS 自检哨兵与报告（渲染器可选功能生成，见 lib/python/ppt_build.py）
+.ppt-master-jscheck*
+
+# 生成的 PPTX 不入库；examples/ 下允许保留示例产物
+*.pptx
+!examples/*.pptx
