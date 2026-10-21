@@ -127,7 +127,13 @@ async function main(argv) {
   }
 
   const lint = result.lint || {}
-  process.stdout.write(`✓ 渲染成功：${rel(outPath)}（${kb(result.bytes || fs.statSync(outPath).size)}）\n`)
+  // dry-run 不产出文件，不能 stat；显式区分，避免无意义地抛 ENOENT。
+  const size = result.bytes
+    ? kb(result.bytes)
+    : fs.existsSync(outPath)
+      ? kb(fs.statSync(outPath).size)
+      : '未生成'
+  process.stdout.write(`✓ ${result.dryRun ? 'dry-run 通过' : '渲染成功'}：${rel(outPath)}（${size}）\n`)
   process.stdout.write(`  · ${result.slides} 页 · 模板 ${result.template}（${result.templateOrigin || 'builtin'}）\n`)
   process.stdout.write(`  · 版式：${(result.layouts || []).join(' / ')}\n`)
   process.stdout.write(`  · 设计审校：${lint.score}/100（错误 ${lint.stats?.errors ?? 0} · 警告 ${lint.stats?.warnings ?? 0} · 建议 ${lint.stats?.infos ?? 0}）\n`)

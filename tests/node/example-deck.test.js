@@ -8,10 +8,13 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { readJson } from './_helpers.mjs'
 import { normalizeDeck, lintDeck } from '../../lib/deck.js'
 import { builtinTemplates } from '../../lib/templates.js'
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const demo = readJson(path.join('examples', 'demo-deck.json'))
 
 test('demo-deck：8-10 页，首封面尾结束页', () => {
@@ -73,4 +76,17 @@ test('demo-deck：归一化无告警，设计审校无 error/warn', () => {
   const blocking = report.issues.filter((issue) => issue.level !== 'info')
   assert.deepEqual(blocking, [], `示例 deck 不应有 error/warn 级问题：\n${JSON.stringify(blocking, null, 2)}`)
   assert.ok(report.score >= 90, `示例 deck 审校分应 ≥ 90，实际 ${report.score}`)
+})
+
+test('scripts/render-example.mjs --dry-run：退出码 0 且不依赖产物文件存在', () => {
+  // 回归保护：dryRun 不生成 .pptx，脚本不能对产物做 stat（CI 曾因此 ENOENT 失败）。
+  const script = path.join(ROOT, 'scripts', 'render-example.mjs')
+  const result = spawnSync(process.execPath, [script, '--dry-run'], {
+    encoding: 'utf8',
+    timeout: 60_000,
+    env: { ...process.env },
+  })
+  assert.equal(result.status, 0, `dry-run 应成功，stderr：${result.stderr}`)
+  assert.match(result.stdout, /dry-run 通过/)
+  assert.match(result.stdout, /设计审校：\d+\/100/)
 })
